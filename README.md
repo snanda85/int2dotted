@@ -9,6 +9,7 @@ Usage
     python int2dotted.py <Integer Or IP>
 
 If an integer is passed, it will be converted to expanded form
+
 If an IP is passed, it will be converted to integer
 
 Examples
