@@ -3,11 +3,14 @@
 Convert IP formats (integer and dotted)
 Support IPv4 and IPv6 addresses
 
- Usage:
-    ./int2dotted.py <Integer Or IP>
-
+Notes:
+    If Integer is passed, it will be converted to IP
+    If IP address is passed, it will be converted to Integer
 .. moduleauthor:: Sandeep Nanda <snanda85@gmail.com>
 """
+
+# NOTICE: Modified from the original code of Sandeep Nanda by Dan Gayle
+
 ################################################################################
 #   Copyright 2014 Sandeep Nanda
 #
@@ -27,11 +30,18 @@ Support IPv4 and IPv6 addresses
 import sys
 import struct
 import socket
+import argparse
+
 MAX_INT64 = 0xFFFFFFFFFFFFFFFF
 
-
 def ip2int(addr):
-    """Converts the IP notation to Integer"""
+    """Convert the IP notation to Integer.
+
+    >>> ip2int('8.8.8.8')
+    134744072
+    >>> ip2int('2001:4860:4860::8888')
+    42541956123769884636017138956568135816L
+    """
     try:
         # Try IPv4
         return struct.unpack("!i", socket.inet_pton(socket.AF_INET, addr))[0]
@@ -41,36 +51,41 @@ def ip2int(addr):
         return (hi << 64) | lo
 
 def int2ip(addr):
-    """Converts an Integer to the corresponding IP notation"""
+    """Convert an Integer to the corresponding IP notation.
+
+    >>> int2ip(134744072)
+    '8.8.8.8'
+    >>> int2ip(42541956123769884636017138956568135816L)
+    '2001:4860:4860::8888'
+    """
     try:
         # Try IPv4
-        return socket.inet_ntoa(struct.pack("!i", addr)) 
+        return socket.inet_ntoa(struct.pack("!i", addr))
     except:
         # Try IPv6
         int_tuple = ((addr >> 64) & MAX_INT64, addr & MAX_INT64)
         x = struct.pack("!2q", *int_tuple)
         return socket.inet_ntop(socket.AF_INET6, x)
 
-def print_usage():
-    print("Usage:")
-    print("\t./int2dotted.py <Integer or IP>")
-    print("\nNotes:")
-    print("\tIf Integer is passed, it will be converted to IP")
-    print("\tIf IP address is passed, it will be converted to Integer")
-    sys.exit(1)
+def main():
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        argument_default=argparse.SUPPRESS
+        )
+    parser.add_argument("ip",
+        help="IP address in dotted or integer notation.")
 
-if len(sys.argv) != 2:
-    print_usage()
+    args = parser.parse_args()
 
-arg = sys.argv[1]
-if arg.lower() in ("-h", "--help"):
-    print_usage()
+    if args.ip:
+        try:
+            print ip2int(args.ip)
+        except:
+            try:
+                print int2ip(int(args.ip))
+            except:
+                print int2ip(long(args.ip))
 
-try:
-    ip = int(arg)
-except Exception as e:
-    #print "Converting IP to Int"
-    print ip2int(arg)
-else:
-    #print "Converting Int to IP"
-    print int2ip(ip)
+if __name__ == '__main__':
+    sys.exit(main())
